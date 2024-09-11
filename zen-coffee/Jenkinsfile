@@ -1,0 +1,42 @@
+pipeline {
+  
+    agent any
+   
+    stages {
+        stage('SCM') {
+            steps {
+             git branch: 'main', url: 'https://github.com/learnaws288/zen-coffee.git'  
+            }
+           
+}
+       
+      stage('Build Docker OWN image') {
+            steps {
+                sh "sudo docker build -t learndevops16/webappb100:latest ."
+
+            }
+           
+        }
+        
+         stage('docker push ') {
+     steps {
+     withCredentials([string(credentialsId: 'DOCKER_HUB_PWD', variable: 'DOCKER_HUB_PASS_CODE')])  {
+    // some block
+    sh "sudo docker login -u learndevops16 -p $DOCKER_HUB_PASS_CODE"
+}
+ sh "sudo docker push learndevops16/webappb100:latest"
+
+}
+}
+stage('Deploy webAPP in Prod Env') {
+steps {
+sshagent(['QA_ENV']) {
+sh "ssh -o StrictHostKeyChecking=no ubuntu@13.233.200.177    sudo wget https://raw.githubusercontent.com/learnaws288/zen-coffee/main/nginx-zon-coffee.yaml"
+ 
+sh "ssh ubuntu@13.233.200.177    sudo kubectl apply -f nginx-zon-coffee.yaml"
+}
+}
+}
+
+    }
+}
